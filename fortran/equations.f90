@@ -43,8 +43,10 @@
 
     logical, parameter :: plot_evolve = .false. !for outputing time evolution
 
-    integer, parameter :: basic_num_eqns = 4
-    integer, parameter :: ix_etak=1, ix_clxc=2, ix_clxb=3, ix_vb=4 !Scalar array indices for each quantity
+    ! GDM modifications
+    integer, parameter :: basic_num_eqns = 5
+    integer, parameter :: ix_etak=1, ix_clxc=2, ix_vc=3, ix_clxb=4, ix_vb=5
+
     integer, parameter :: ixt_H = 1, ixt_shear = 2 !tensor indices
 
     logical :: DoTensorNeutrinos = .true.
@@ -1924,6 +1926,8 @@
 
     !  CDM
     y(ix_clxc)=InitVec(i_clxc)
+    ! GDM
+    y(ix_vc)=0._dl
 
     !  Baryons
     y(ix_clxb)=InitVec(i_clxb)
@@ -2159,6 +2163,10 @@
     real(dl) gpres_noDE !Pressure with matter and radiation, no dark energy
     real(dl) qgdot,qrdot,pigdot,pirdot,vbdot,dgrho,adotoa
     real(dl) a,a2,z,clxc,clxb,vb,clxg,qg,pig,clxr,qr,pir
+    
+    !GDM
+    real(dl) :: vc, vcdot
+
     real(dl) E2, dopacity
     integer l,i,ind, ind2, off_ix, ix
     real(dl) dgs,sigmadot,dz
@@ -2196,6 +2204,9 @@
 
     !  CDM variables
     clxc=ay(ix_clxc)
+
+    ! GDM
+    vc=ay(ix_vc)
 
     !  Baryon variables
     clxb=ay(ix_clxb)
@@ -2330,11 +2341,15 @@
             cs2_cdm = 0._dl
         end if
 
-        clxcdot = -(1._dl + w_cdm)*(k*z) - 3._dl*adotoa*(cs2_cdm - w_cdm)*clxc
+        clxcdot = -(1._dl + w_cdm)*(vc + k*z) - 3._dl*adotoa*(cs2_cdm - w_cdm)*clxc
+        vcdot   = -adotoa*(1._dl - 3._dl*cs2_cdm)*vc + k*cs2_cdm/(1._dl + w_cdm + 1e-14_dl)*clxc
         ayprime(ix_clxc) = clxcdot
+        ayprime(ix_vc)=vcdot
     else
-        clxcdot = -k*z
+        clxcdot = -(vc + k*z)
+        vcdot=0._dl
         ayprime(ix_clxc)=clxcdot
+        ayprime(ix_vc)=vcdot
     end if
 
     !  Baryon equation of motion.
@@ -2732,9 +2747,9 @@
             EV%OutputTransfer(Transfer_tot_de) =  dgrho/grho_matter
             !Transfer_Weyl is k^2Phi, where Phi is the Weyl potential
             EV%OutputTransfer(Transfer_Weyl) = k2*phi
-            EV%OutputTransfer(Transfer_Newt_vel_cdm)=  -k*sigma/adotoa
+            EV%OutputTransfer(Transfer_Newt_vel_cdm)=  -k*(sigma+vc/k)/adotoa !GDM
             EV%OutputTransfer(Transfer_Newt_vel_baryon) = -k*(vb + sigma)/adotoa
-            EV%OutputTransfer(Transfer_vel_baryon_cdm) = vb
+            EV%OutputTransfer(Transfer_vel_baryon_cdm) = vb - vc !GDM
             if (State%CP%do21cm) then
                 Tspin = State%CP%Recomb%T_s(a)
                 xe = State%CP%Recomb%x_e(a)
