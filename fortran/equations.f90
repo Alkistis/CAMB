@@ -2178,6 +2178,9 @@
     real(dl) ISW, quadrupole_source, doppler, monopole_source, tau0, ang_dist
     real(dl) dgrho_de, dgq_de, cs2_de
 
+    real(dl) :: t_eval, t0, v_kick, w_cdm, cs2_cdm, a_safe
+    real(dl), save :: gdm_t0 = -1._dl
+
     k=EV%k_buf
     k2=EV%k2_buf
 
@@ -2305,9 +2308,34 @@
         call State%CP%DarkEnergy%PerturbationEvolve(ayprime, w_dark_energy_t, &
         EV%w_ix, a, adotoa, k, z, ay)
 
-    !  CDM equation of motion
-    clxcdot=-k*z
-    ayprime(ix_clxc)=clxcdot
+    !  CDM / GDM-kick equation of motion (perturbations only)
+    if (CP%use_gdm_kick .and. CP%gdm_v0 > 0._dl) then
+        a_safe = max(a, 1e-8_dl)
+
+        t_eval = State%DeltaPhysicalTimeGyr(0._dl, a_safe)
+        t_eval = max(t_eval, 1e-12_dl)
+
+        if (gdm_t0 < 0._dl) gdm_t0 = max(State%DeltaPhysicalTimeGyr(0._dl, 1._dl), t_eval)
+        t0 = gdm_t0
+
+        v_kick = CP%gdm_v0 * (t0 / t_eval)**(1._dl/7._dl)
+
+        w_cdm   = CP%gdm_Aw * v_kick*v_kick
+        w_cdm   = w_cdm * (1._dl - exp(-a_safe/1e-4_dl))   ! suppress early-time activation
+        w_cdm   = max(w_cdm, 0._dl)
+        cs2_cdm = max((3._dl/5._dl)*w_cdm, 0._dl)
+
+        if (a_safe < 1e-6_dl) then
+            w_cdm = 0._dl
+            cs2_cdm = 0._dl
+        end if
+
+        clxcdot = -(1._dl + w_cdm)*(k*z) - 3._dl*adotoa*(cs2_cdm - w_cdm)*clxc
+        ayprime(ix_clxc) = clxcdot
+    else
+        clxcdot = -k*z
+        ayprime(ix_clxc)=clxcdot
+    end if
 
     !  Baryon equation of motion.
     clxbdot=-k*(z+vb)

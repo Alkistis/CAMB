@@ -441,6 +441,11 @@
         P%omch2 = Ini%Read_Double('omch2')
         P%omnuh2 = Ini%Read_Double('omnuh2')
         P%omk = Ini%Read_Double('omk')
+
+        ! GDM kick model parameters
+        P%use_gdm_kick = Ini%Read_Logical('use_gdm_kick', .false.)
+        P%gdm_v0       = Ini%Read_Double('gdm_v0', 0._dl)
+        P%gdm_Aw       = Ini%Read_Double('gdm_Aw', 1._dl)
     else
         ErrMsg = 'use_physical = F no longer supported. Use ombh2, omch2, omnuh2, omk'
         return

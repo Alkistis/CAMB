@@ -147,6 +147,11 @@
         real(dl)  :: Nu_mass_fractions(max_nu) !The ratios of the total densities
         integer   :: Nu_mass_numbers(max_nu) !physical number per eigenstate
 
+         ! GDM kick model (perturbations-only CDM modification)
+        logical :: use_gdm_kick = .false.
+        real(dl) :: gdm_v0 = 0._dl
+        real(dl) :: gdm_Aw = 1._dl
+
         class(TInitialPower), allocatable :: InitPower
         class(TRecombinationModel), allocatable :: Recomb
         class(TReionizationModel), allocatable :: Reion
