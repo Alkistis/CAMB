@@ -304,6 +304,9 @@ class CAMBparams(F2003Class):
         ("ombh2", c_double, "Omega_baryon h^2"),
         ("omch2", c_double, "Omega_cdm h^2"),
         ("omk", c_double, "Omega_K"),
+        ("use_gdm_kick", c_bool),
+        ("gdm_v0", c_double, "GDM v0"),
+        ("gdm_Aw", c_double, "GDM Aw"),
         ("omnuh2", c_double, "Omega_massive_neutrino h^2"),
         ("H0", c_double, "Hubble parameter is km/s/Mpc units"),
         ("TCMB", c_double, "CMB temperature today in Kelvin"),
@@ -633,8 +636,11 @@ class CAMBparams(F2003Class):
         bbn_predictor: None | str | bbn.BBNPredictor = None,
         theta_H0_range=(10, 100),
         setter_H0=None,
+        use_gdm_kick = True,
+        gdm_v0 = 0.0,
+        gdm_Aw = 1.0
     ):
-        r"""
+        """
         Sets cosmological parameters in terms of physical densities and parameters (e.g. as used in Planck analyses).
         Default settings give a single distinct neutrino mass eigenstate, by default one neutrino with mnu = 0.06eV.
         Set the neutrino_hierarchy parameter to normal or inverted to use a two-eigenstate model that is a good
@@ -702,6 +708,10 @@ class CAMBparams(F2003Class):
         self.ombh2 = ombh2
         self.omch2 = omch2
         self.Alens = Alens
+
+        self.use_gdm_kick = use_gdm_kick
+        self.gdm_v0 = gdm_v0    
+        self.gdm_Aw = gdm_Aw
 
         neutrino_mass_fac = constants.neutrino_mass_fac * (constants.COBE_CMBTemp / TCMB) ** 3
 

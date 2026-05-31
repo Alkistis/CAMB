@@ -135,6 +135,12 @@
         real(dl)  :: ombh2 = 0._dl !baryon density Omega_b h^2
         real(dl)  :: omch2 = 0._dl !cold dark matter density Omega_c h^2
         real(dl)  :: omk = 0._dl !Omega_K
+
+        ! GDM kick model (perturbations-only CDM modification)
+        logical :: use_gdm_kick = .false.
+        real(dl) :: gdm_v0 = 0._dl
+        real(dl) :: gdm_Aw = 1._dl
+
         real(dl)  :: omnuh2 = 0._dl !massive neutino Omega_nu h^2
         real(dl)  :: H0 = 67._dl !Hubble parameter in km/s/Mpc
         real(dl)  :: TCMB = COBE_CMBTemp
@@ -146,11 +152,6 @@
         real(dl)  :: Nu_mass_degeneracies(max_nu)
         real(dl)  :: Nu_mass_fractions(max_nu) !The ratios of the total densities
         integer   :: Nu_mass_numbers(max_nu) !physical number per eigenstate
-
-         ! GDM kick model (perturbations-only CDM modification)
-        logical :: use_gdm_kick = .false.
-        real(dl) :: gdm_v0 = 0._dl
-        real(dl) :: gdm_Aw = 1._dl
 
         class(TInitialPower), allocatable :: InitPower
         class(TRecombinationModel), allocatable :: Recomb
