@@ -2320,7 +2320,7 @@
         EV%w_ix, a, adotoa, k, z, ay)
 
     !  CDM / GDM-kick equation of motion (perturbations only)
-    if (CP%use_gdm_kick .and. CP%gdm_v0 > 0._dl) then
+        if (CP%use_gdm_kick .and. CP%gdm_v0 > 0._dl) then
         a_safe = max(a, 1e-8_dl)
 
         t_eval = State%DeltaPhysicalTimeGyr(0._dl, a_safe)
@@ -2330,28 +2330,43 @@
         t0 = gdm_t0
 
         v_kick = CP%gdm_v0 * (t0 / t_eval)**(1._dl/7._dl)
+        ! cap kick to non-relativistic regime used by fit
+        v_kick = min(v_kick, 0.3_dl)
 
-        w_cdm   = CP%gdm_Aw * v_kick*v_kick
-        w_cdm   = w_cdm * (1._dl - exp(-a_safe/1e-4_dl))   ! suppress early-time activation
-        w_cdm   = max(w_cdm, 0._dl)
-        cs2_cdm = max((3._dl/5._dl)*w_cdm, 0._dl)
+        w_cdm = CP%gdm_Aw * v_kick*v_kick
+        !w_cdm = w_cdm * (1._dl - exp(-a_safe/5e-3_dl))
+        w_cdm = max(w_cdm, 0._dl)
+
+        cs2_cdm = (w_cdm / (3._dl * (1._dl + w_cdm))) * (5._dl - 2.9_dl * v_kick * v_kick)
+        cs2_cdm = max(cs2_cdm, 0._dl)
+
+        ! optional/remove:
+        !w_cdm   = min(w_cdm,   1e-3_dl)
+        !cs2_cdm = min(cs2_cdm, 1e-3_dl)
 
         if (a_safe < 1e-6_dl) then
             w_cdm = 0._dl
             cs2_cdm = 0._dl
         end if
 
-        clxcdot = -(1._dl + w_cdm)*(vc + k*z) - 3._dl*adotoa*(cs2_cdm - w_cdm)*clxc
-        vcdot   = -adotoa*(1._dl - 3._dl*cs2_cdm)*vc + k*cs2_cdm/(1._dl + w_cdm + 1e-14_dl)*clxc
-        ayprime(ix_clxc) = clxcdot
+        ! Treat vc as a velocity potential like vb,qg,qr (not theta).
+        ! Then continuity must use k*vc to match k*z units.
+        clxcdot = -(1._dl + w_cdm) * k * (vc + z) - 3._dl*adotoa*(cs2_cdm - w_cdm)*clxc
+
+        ! Euler-like equation for velocity potential vc.
+        ! Keep conservative form; avoid extra gauge terms unless derived consistently.
+        vcdot = -adotoa*(1._dl - 3._dl*cs2_cdm)*vc + k*cs2_cdm*clxc/(1._dl + w_cdm + 1e-14_dl)
+
+        ayprime(ix_clxc)=clxcdot
         ayprime(ix_vc)=vcdot
     else
-        clxcdot = -(vc + k*z)
-        vcdot=0._dl
+        ! Exact LCDM limit in synchronous gauge
+        clxcdot = -k*z
+        vcdot = 0._dl
         ayprime(ix_clxc)=clxcdot
         ayprime(ix_vc)=vcdot
     end if
-
+    
     !  Baryon equation of motion.
     clxbdot=-k*(z+vb)
     ayprime(ix_clxb)=clxbdot
