@@ -2329,7 +2329,7 @@
         if (gdm_t0 < 0._dl) gdm_t0 = max(State%DeltaPhysicalTimeGyr(0._dl, 1._dl), t_eval)
         t0 = gdm_t0
 
-        v_kick = CP%gdm_v0 * (t0 / t_eval)**(1._dl/7._dl)
+        v_kick = CP%gdm_v0 * (t_eval / t0)**(1._dl/7._dl)
         ! cap kick to non-relativistic regime used by fit
         v_kick = min(v_kick, 0.3_dl)
 
